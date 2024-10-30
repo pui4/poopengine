@@ -117,6 +117,7 @@ export const poopengine = {
   },
 
   update: function () {
+    this.context.reset()
     window.requestAnimationFrame(() => this.update());
     this.context.clearRect(0, 0, this.display.width, this.display.height);
 
@@ -148,11 +149,13 @@ export const poopengine = {
     colour,
     image,
     tile,
+    image_alpha,
     text,
     text_size,
     font,
     word_wrap,
     line_height,
+    text_align,
   }) {
     this.width = width;
     this.height = height;
@@ -166,6 +169,10 @@ export const poopengine = {
     if (image != undefined) {
       this.image = new Image();
       this.image.src = image;
+      this.image_alpha = image_alpha;
+      if (this.image_alpha != undefined) {
+        ctx.globalAlpha = this.image_alpha;
+      }
       if (tile == undefined || tile == false) {
         ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
       } else {
@@ -186,6 +193,10 @@ export const poopengine = {
         ctx.font = String(text_size + "px Arial");
       }
 
+      if (text_align != undefined) {
+        ctx.textAlign = text_align;
+      }
+
       ctx.fillText(this.text, this.x, this.text_size + this.y, this.width);
     }
     // Box logic
@@ -197,6 +208,9 @@ export const poopengine = {
     this.update = function () {
       // Image logic
       if (image != undefined) {
+        if (this.image_alpha != undefined) {
+          ctx.globalAlpha = this.image_alpha;
+        }
         if (tile == undefined || tile == false) {
           ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
         } else {
@@ -261,6 +275,7 @@ export const poopengine = {
 
     poopengine.objects.push(this);
     this.index = poopengine.objects.indexOf(this);
+    ctx.reset();
   },
 
   audio: function (src) {
