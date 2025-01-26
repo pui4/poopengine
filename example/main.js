@@ -6,7 +6,7 @@ poopengine.start = function () {
     height: 50,
     x: 0,
     y: 0,
-    colour: 'blue'
+    colour: 'red'
   });
 }
 

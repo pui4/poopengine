@@ -1,5 +1,3 @@
-import { poopengine } from '../poopengine.mjs';
-
 const originalStart = poopengine.start;
 poopengine.start = function () {
   originalStart.apply(this);
@@ -8,7 +6,7 @@ poopengine.start = function () {
     height: 50,
     x: 0,
     y: 0,
-    colour: 'red'
+    colour: 'blue'
   });
 }
 

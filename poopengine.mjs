@@ -15,8 +15,8 @@ class poopengine_class {
         this.mouse_pos = { x: null, y: null };
         this.hovering = function (object) {
           if (this.mouse_pos.x != null) {
-            const index = poopengine.objects.indexOf(object);
-            const array = poopengine.objects.slice(index + 1);
+            const index = this.objects.indexOf(object);
+            const array = this.objects.slice(index + 1);
 
             for (let i = 0; i < array.length; i++) {
               if (
@@ -162,7 +162,7 @@ class poopengine_class {
       this.y = y;
       this.colour = colour;
 
-      let ctx = poopengine.context;
+      let ctx = this.context;
 
       // Image logic
       if (image != undefined) {
@@ -267,13 +267,13 @@ class poopengine_class {
       };
 
       this.destroy = function () {
-        const index = poopengine.objects.indexOf(this);
+        const index = this.objects.indexOf(this);
 
-        poopengine.objects.splice(index, 1);
+        this.objects.splice(index, 1);
       };
 
-      poopengine.objects.push(this);
-      this.index = poopengine.objects.indexOf(this);
+      this.objects.push(this);
+      this.index = this.objects.indexOf(this);
       ctx.reset();
     };
 
@@ -404,8 +404,14 @@ class poopengine_component extends HTMLElement {
       const shadowRoot = this.attachShadow({ mode: 'open' });
       const canvas = document.createElement('canvas');
       shadowRoot.append(canvas);
-      const localPoopengine = new poopengine_class(canvas);
-      eval(scr);
+      const poopengine = new poopengine_class(canvas);
+      const scopedFunction = new Function("poopengine", `
+        (() => {
+          ${scr}
+        }).call(poopengine);
+      `);
+
+      scopedFunction(poopengine);
     }));
   }
 }
