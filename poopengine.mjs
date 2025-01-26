@@ -1,5 +1,5 @@
 class poopengine_class {
-  constructor(canvas) {
+  constructor(canvas, shadowRoot) {
     this.is_fullscreen = false;
     this.canvas = canvas;
     this.display = { width: 300, height: 200 };
@@ -308,28 +308,27 @@ class poopengine_class {
       return new object_class(params);
     }
 
-    // TODO: fix audio
-    /* this.audio = function (src) {
+    this.audio = (src) => {
       this.sound = document.createElement("audio");
       this.sound.src = src;
       this.sound.setAttribute("preload", "auto");
       this.sound.setAttribute("controls", "none");
       this.sound.style.display = "none";
-      document.body.appendChild(this.sound);
-      this.play = function () {
+      shadowRoot.appendChild(this.sound);
+      this.play = () => {
         this.sound.play();
       };
-      this.stop = function () {
+      this.stop = () => {
         this.sound.pause();
         this.sound.currentTime = 0;
       };
-      this.pause = function () {
+      this.pause = () => {
         this.sound.pause();
       };
-      this.loop = function (option) {
+      this.loop = (option) => {
         this.sound.loop = option;
       };
-    }, */
+    },
 
     // Z index logic
     this.move_to_top = (object) => {
@@ -431,8 +430,8 @@ class poopengine_component extends HTMLElement {
 
     const shadowRoot = this.attachShadow({ mode: 'open' });
     this.canvas = document.createElement('canvas');
-    shadowRoot.append(canvas);
-    this.poopengine = new poopengine_class(canvas);
+    shadowRoot.append(this.canvas);
+    this.poopengine = new poopengine_class(this.canvas, shadowRoot);
   }
 
   attributeChangedCallback(name, _oldValue, newValue) {
