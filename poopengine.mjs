@@ -424,13 +424,13 @@ class poopengine_class {
 }
 
 class poopengine_component extends HTMLElement {
-  static observedAttributes = ['script', 'width', 'height', 'fullscreen'];
+  static observedAttributes = ['script', 'width', 'height', 'fullscreen', 'style'];
 
   constructor() {
     super();
 
     const shadowRoot = this.attachShadow({ mode: 'open' });
-    const canvas = document.createElement('canvas');
+    this.canvas = document.createElement('canvas');
     shadowRoot.append(canvas);
     this.poopengine = new poopengine_class(canvas);
   }
@@ -461,6 +461,9 @@ class poopengine_component extends HTMLElement {
         break;
       case "fullscreen":
         this.poopengine.is_fullscreen = true;
+        break;
+      case "style":
+        this.canvas.style = newValue;
         break;
     }
   }
