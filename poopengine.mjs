@@ -1,5 +1,6 @@
 class poopengine_class {
   constructor(canvas) {
+    this.is_fullscreen = false;
     this.canvas = canvas;
     this.display = { width: 300, height: 200 };
     this.context = null;
@@ -13,7 +14,7 @@ class poopengine_class {
         this.mousedown = null;
         this.mouseup = null;
         this.mouse_pos = { x: null, y: null };
-        this.hovering = function (object) {
+        this.hovering = (object) => {
           if (this.mouse_pos.x != null) {
             const index = this.objects.indexOf(object);
             const array = this.objects.slice(index + 1);
@@ -47,20 +48,29 @@ class poopengine_class {
     this.deltaTime = 1;
     this.times = [];
 
-    this.start = function () {
+    this.start = () => {
       if (!this.canvas) {
         console.error("Canvas is not initialized yet.");
         return;
       }
 
       this.canvas.click();
-      this.canvas.width = this.display.width;
-      this.canvas.height = this.display.height;
-
+      if (this.is_fullscreen) {
+        this.canvas.width = this.display.width = document.body.clientWidth;
+        this.canvas.height = this.display.height = window.innerHeight;
+      } else {
+        this.canvas.width = this.display.width;
+        this.canvas.height = this.display.height;
+      }
       this.context = this.canvas.getContext("2d");
 
       // Event listeners
       window.onresize = () => {
+        if (this.is_fullscreen) {
+          this.canvas.width = this.display.width = document.body.clientWidth;
+          this.canvas.height = this.display.height = window.innerHeight;
+        }
+
         this.resize();
       };
 
@@ -86,7 +96,7 @@ class poopengine_class {
         }, 10);
       });
 
-      window.addEventListener("mousemove", (event) => {
+      this.canvas.addEventListener("mousemove", (event) => {
         this.input.mouse_pos = { x: event.clientX, y: event.clientY };
       });
 
@@ -115,7 +125,7 @@ class poopengine_class {
       window.requestAnimationFrame(() => this.update());
     };
 
-    this.update = function () {
+    this.update = () => {
       this.context.reset()
       window.requestAnimationFrame(() => this.update());
       this.context.clearRect(0, 0, this.display.width, this.display.height);
@@ -138,75 +148,38 @@ class poopengine_class {
         this.objects[i].update();
       }
     };
+    
+    class object_class {
+      constructor({
+        poopengine,
+        width,
+        height,
+        x,
+        y,
+        colour,
+        image,
+        tile,
+        image_alpha,
+        text,
+        text_size,
+        font,
+        word_wrap,
+        line_height,
+        text_align,
+      }) {
+        this.width = width;
+        this.height = height;
+        this.x = x;
+        this.y = y;
+        this.colour = colour;
 
-    // Utitlty functions
-    this.object = function ({
-      width,
-      height,
-      x,
-      y,
-      colour,
-      image,
-      tile,
-      image_alpha,
-      text,
-      text_size,
-      font,
-      word_wrap,
-      line_height,
-      text_align,
-    }) {
-      this.width = width;
-      this.height = height;
-      this.x = x;
-      this.y = y;
-      this.colour = colour;
+        let ctx = poopengine.context;
 
-      let ctx = this.context;
-
-      // Image logic
-      if (image != undefined) {
-        this.image = new Image();
-        this.image.src = image;
-        this.image_alpha = image_alpha;
-        if (this.image_alpha != undefined) {
-          ctx.globalAlpha = this.image_alpha;
-        }
-        if (tile == undefined || tile == false) {
-          ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
-        } else {
-          this.pattern = ctx.createPattern(this.image, "repeat");
-          ctx.fillStyle = this.pattern;
-          ctx.fillRect(this.x, this.y, this.width, this.height);
-        }
-      }
-      // Text logic
-      else if (text != undefined) {
-        ctx.fillStyle = this.colour;
-        this.text = text;
-        this.text_size = text_size;
-        if (font != undefined) {
-          this.font = font;
-          ctx.font = String(text_size + "px " + font);
-        } else {
-          ctx.font = String(text_size + "px Arial");
-        }
-
-        if (text_align != undefined) {
-          ctx.textAlign = text_align;
-        }
-
-        ctx.fillText(this.text, this.x, this.text_size + this.y, this.width);
-      }
-      // Box logic
-      else {
-        ctx.fillStyle = this.colour;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-      }
-
-      this.update = function () {
         // Image logic
         if (image != undefined) {
+          this.image = new Image();
+          this.image.src = image;
+          this.image_alpha = image_alpha;
           if (this.image_alpha != undefined) {
             ctx.globalAlpha = this.image_alpha;
           }
@@ -221,61 +194,119 @@ class poopengine_class {
         // Text logic
         else if (text != undefined) {
           ctx.fillStyle = this.colour;
-          if (this.font != undefined) {
-            ctx.font = String(this.text_size + "px " + this.font);
+          this.text = text;
+          this.text_size = text_size;
+          if (font != undefined) {
+            this.font = font;
+            ctx.font = String(text_size + "px " + font);
           } else {
-            ctx.font = String(this.text_size + "px Arial");
+            ctx.font = String(text_size + "px Arial");
           }
 
-          if (word_wrap == true) {
-            this.line_height = line_height;
-
-            const words = this.text.split(" ");
-            let currentLine = words[0];
-            let lineCount = 0;
-
-            for (let i = 1; i < words.length; i++) {
-              const word = words[i];
-              const width = ctx.measureText(currentLine + " " + word).width;
-
-              if (width < this.width) {
-                currentLine += " " + word;
-              } else {
-                ctx.fillText(
-                  currentLine,
-                  this.x,
-                  this.y + this.line_height * lineCount++ + this.text_size
-                );
-                currentLine = word;
-              }
-            }
-
-            ctx.fillText(
-              currentLine,
-              this.x,
-              this.y + this.line_height * lineCount + this.text_size
-            );
-          } else {
-            ctx.fillText(this.text, this.x, this.y + this.text_size, this.width);
+          if (text_align != undefined) {
+            ctx.textAlign = text_align;
           }
+
+          ctx.fillText(this.text, this.x, this.text_size + this.y, this.width);
         }
         // Box logic
         else {
           ctx.fillStyle = this.colour;
           ctx.fillRect(this.x, this.y, this.width, this.height);
         }
-      };
 
-      this.destroy = function () {
-        const index = this.objects.indexOf(this);
+        this.update = () => {
+          // Image logic
+          if (image != undefined) {
+            if (this.image_alpha != undefined) {
+              ctx.globalAlpha = this.image_alpha;
+            }
+            if (tile == undefined || tile == false) {
+              ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+            } else {
+              this.pattern = ctx.createPattern(this.image, "repeat");
+              ctx.fillStyle = this.pattern;
+              ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+          }
+          // Text logic
+          else if (text != undefined) {
+            ctx.fillStyle = this.colour;
+            if (this.font != undefined) {
+              ctx.font = String(this.text_size + "px " + this.font);
+            } else {
+              ctx.font = String(this.text_size + "px Arial");
+            }
 
-        this.objects.splice(index, 1);
-      };
+            if (word_wrap == true) {
+              this.line_height = line_height;
 
-      this.objects.push(this);
-      this.index = this.objects.indexOf(this);
-      ctx.reset();
+              const words = this.text.split(" ");
+              let currentLine = words[0];
+              let lineCount = 0;
+
+              for (let i = 1; i < words.length; i++) {
+                const word = words[i];
+                const width = ctx.measureText(currentLine + " " + word).width;
+
+                if (width < this.width) {
+                  currentLine += " " + word;
+                } else {
+                  ctx.fillText(
+                    currentLine,
+                    this.x,
+                    this.y + this.line_height * lineCount++ + this.text_size
+                  );
+                  currentLine = word;
+                }
+              }
+
+              ctx.fillText(
+                currentLine,
+                this.x,
+                this.y + this.line_height * lineCount + this.text_size
+              );
+            } else {
+              ctx.fillText(this.text, this.x, this.y + this.text_size, this.width);
+            }
+          }
+          // Box logic
+          else {
+            ctx.fillStyle = this.colour;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+          }
+        };
+
+        this.destroy = () => {
+          const index = poopengine.objects.indexOf(this);
+
+          poopengine.objects.splice(index, 1);
+        };
+
+        poopengine.objects.push(this);
+        this.index = poopengine.objects.indexOf(this);
+        ctx.reset();
+      }
     };
+    this.create_object = (params = {
+      width,
+      height,
+      x,
+      y,
+      colour,
+      image,
+      tile,
+      image_alpha,
+      text,
+      text_size,
+      font,
+      word_wrap,
+      line_height,
+      text_align,
+    }) => {
+      params.poopengine = this;
+      return new object_class(params);
+    }
 
     // TODO: fix audio
     /* this.audio = function (src) {
@@ -301,7 +332,7 @@ class poopengine_class {
     }, */
 
     // Z index logic
-    this.move_to_top = function (object) {
+    this.move_to_top = (object) => {
       const index = this.objects.indexOf(object);
       if (index !== -1) {
         this.objects.splice(index, 1);
@@ -310,7 +341,7 @@ class poopengine_class {
       this.objects.push(object);
     };
 
-    this.send_to_back_bg = function (object) {
+    this.send_to_back_bg = (object) => {
       const index = this.objects.indexOf(object);
 
       if (index !== -1) {
@@ -319,7 +350,7 @@ class poopengine_class {
       }
     };
 
-    this.send_to_back = function (object) {
+    this.send_to_back = (object) => {
       const index = this.objects.indexOf(object);
       if (index !== -1) {
         this.objects.splice(index, 1);
@@ -328,7 +359,7 @@ class poopengine_class {
       this.objects.unshift(object);
     };
 
-    this.change_index = function (object, change) {
+    this.change_index = (object, change) => {
       const index = this.objects.indexOf(object);
       const new_index = index + change;
 
@@ -338,7 +369,7 @@ class poopengine_class {
       }
     };
 
-    this.set_index = function (object, new_index) {
+    this.set_index = (object, new_index) => {
       const index = this.objects.indexOf(object);
 
       if (index !== -1) {
@@ -347,7 +378,7 @@ class poopengine_class {
       }
     };
 
-    this.revert_index = function (object) {
+    this.revert_index = (object) => {
       const currentIndex = this.objects.indexOf(object);
 
       if (currentIndex !== -1 && typeof object.index === "number") {
@@ -357,11 +388,11 @@ class poopengine_class {
       }
     };
 
-    this.resize= function () {};
+    this.resize = () => {};
 
     // Animation
     this.animating_vals = []
-    this.animate_value = function (id, val, increase, speed, until, callback, finish) {
+    this.animate_value = (id, val, increase, speed, until, callback, finish) => {
       let isBigger;
       if (val < until) {
         isBigger = true;
@@ -393,26 +424,45 @@ class poopengine_class {
 }
 
 class poopengine_component extends HTMLElement {
-  static observedAttributes = ['script'];
+  static observedAttributes = ['script', 'width', 'height', 'fullscreen'];
 
   constructor() {
     super();
+
+    const shadowRoot = this.attachShadow({ mode: 'open' });
+    const canvas = document.createElement('canvas');
+    shadowRoot.append(canvas);
+    this.poopengine = new poopengine_class(canvas);
   }
 
   attributeChangedCallback(name, _oldValue, newValue) {
-    fetch(newValue).then(res => res.text().then(scr => {
-      const shadowRoot = this.attachShadow({ mode: 'open' });
-      const canvas = document.createElement('canvas');
-      shadowRoot.append(canvas);
-      const poopengine = new poopengine_class(canvas);
-      const scopedFunction = new Function("poopengine", `
-        (() => {
-          ${scr}
-        }).call(poopengine);
-      `);
-
-      scopedFunction(poopengine);
-    }));
+    switch (name) {
+      case "script":
+        fetch(newValue).then(res => res.text().then(scr => {
+          const scopedFunction = new Function("poopengine", scr)
+          scopedFunction(this.poopengine);
+        }));
+        break;
+      case "width":
+        try {
+          let wid = parseInt(newValue)
+          this.poopengine.display.width = wid;
+        } catch {
+          console.error("Width sould be a numeric value.")
+        }
+        break;
+      case "height":
+        try {
+          let wid = parseInt(newValue)
+          this.poopengine.display.height = wid;
+        } catch {
+          console.error("Height sould be a numeric value.")
+        }
+        break;
+      case "fullscreen":
+        this.poopengine.is_fullscreen = true;
+        break;
+    }
   }
 }
 
